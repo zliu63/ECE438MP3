@@ -25,8 +25,10 @@ public:
     void LinkState(Graph g){
         CostTable.clear();
         ForwardTable.clear();
-        for(auto it = g.Nodes.begin(); it != g.Nodes.end(); ++it){
-            int src = it->first;
+        for(int i = 0; i <= g.MaxNodeID; i++){
+            if(!g.HasNode(i))
+                continue;
+            int src = i;
             unordered_map<int,int> dist,prev;
             Dijkstra(g,src,dist,prev);
             OutTopology(g, src, dist, prev);
@@ -38,10 +40,12 @@ public:
     void DistanceVector(Graph g){
         CostTable.clear();
         ForwardTable.clear();
-        for(auto it = g.Nodes.begin(); it != g.Nodes.end(); ++it){
-            int src = it->first;
+        for(int i = 0; i <= g.MaxNodeID; i++){
+            if(!g.HasNode(i))
+                continue;
+            int src = i;
             unordered_map<int,int> dist,prev;
-            BellmanFord(g, src, dist, prev);
+            BellmanFord(g,src,dist,prev);
             OutTopology(g, src, dist, prev);
             CostTable.insert(make_pair(src, dist));
             ForwardTable.insert(make_pair(src,prev));
@@ -58,7 +62,12 @@ public:
             int src,dst;
             string msg = "";
             ProcessMessage(line, src, dst, msg);
-            outfile<<"From "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
+            if(CostTable[src][dst] == INFINITY){
+                outfile<<"From "<<src<<" to "<<dst<<" cost infinite hops unreachable message "<<msg<<endl;
+                continue;
+            }else{
+                outfile<<"From "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
+            }
             vector<int> stack;
             int tmp = dst;
             stack.push_back(dst);
@@ -241,7 +250,7 @@ private:
     }
     void OutTopology(Graph g, int src,unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         ofstream outfile;
-        outfile.open("output.txt", ios_base::app);
+        outfile.open("/Users/ziyangliu/Documents/ECE438MP3/ECE438MP3/ECE438MP3/output.txt", ios_base::app);
         outfile<<endl;
         vector<int> stack;
         int dst = 0;
