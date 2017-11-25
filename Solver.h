@@ -250,7 +250,7 @@ private:
     }
     void OutTopology(Graph g, int src,unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         ofstream outfile;
-        outfile.open("/Users/ziyangliu/Documents/ECE438MP3/ECE438MP3/ECE438MP3/output.txt", ios_base::app);
+        outfile.open("output.txt", ios_base::app);
         outfile<<endl;
         vector<int> stack;
         int dst = 0;
