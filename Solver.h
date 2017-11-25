@@ -62,15 +62,17 @@ public:
             int src,dst;
             string msg = "";
             ProcessMessage(line, src, dst, msg);
-            if(CostTable[src][dst] == INFINITY){
-                outfile<<"From "<<src<<" to "<<dst<<" cost infinite hops unreachable message "<<msg<<endl;
+            if(CostTable[src][dst] == 999999999){
+                outfile<<"from "<<src<<" to "<<dst<<" cost infinite hops unreachable message "<<msg<<endl;
+                cout<<"from "<<src<<" to "<<dst<<" cost infinite hops unreachable message "<<msg<<endl;
                 continue;
             }else{
-                outfile<<"From "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
+                outfile<<"from "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
+                cout<<"from "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
             }
             vector<int> stack;
             int tmp = dst;
-            stack.push_back(dst);
+            //stack.push_back(dst);
             while(tmp != src){
                 if(tmp == UNDEFINED)
                     return;
@@ -79,9 +81,12 @@ public:
             }
             for(int i = int(stack.size()-1); i>= 0; i--){
                 outfile<<stack[i]<<" ";
+                cout<<stack[i]<<" ";
             }
             outfile<<"message "<<msg<<endl;
+            cout<<"message "<<msg<<endl;
         }
+        outfile.close();
     }
     
     void OutputPath(string outfilename,int src, int dst){
@@ -96,8 +101,10 @@ public:
             stack.push_back(ForwardTable[src][tmp]);
             tmp = ForwardTable[src][tmp];
         }
+        stack.pop_back();
         for(int i = int(stack.size()-1); i>= 0; i--){
             outfile<<stack[i]<<"  ";
+            cout<<stack[i]<<"  ";
         }
 
     }
@@ -106,13 +113,13 @@ public:
 private:
     void Dijkstra(Graph g, int src, unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         if(dist.size() != 0 || prev.size() != 0){
-            cout<<"Error(Dijkstra):Invalid input"<<endl;
+            //cout<<"Error(Dijkstra):Invalid input"<<endl;
             return;
         }
         unordered_map<int,Node> Q;
         //Initialization
         for ( auto it = g.Nodes.begin(); it != g.Nodes.end(); ++it ){ //
-            dist[it->first] = INFINITY;
+            dist[it->first] = 999999999;
             prev[it->first] = UNDEFINED;
             Q.insert(make_pair(it->first,it->second));
         }
@@ -120,6 +127,9 @@ private:
         dist[src] = 0;
         while(Q.size()!= 0){
             int uID = GetMinDistID(Q,dist);
+            if(uID == -1){
+                break;
+            }
             Node u = Q[uID];
             Q.erase(uID);
             for(int i = 0; i < u.Edges.size(); i++){
@@ -134,8 +144,10 @@ private:
                 if (Q.find(vID) == Q.end())
                     continue;
                 int alt = dist[uID] + e.weight;
-                if (alt < dist[vID]){
+                if (alt < dist[vID] && uID != UNDEFINED && vID != UNDEFINED){
                     dist[vID] = alt;
+                    prev[vID] = uID;
+                }else if (alt == dist[vID] && uID < prev[vID] && uID != UNDEFINED && vID != UNDEFINED){
                     prev[vID] = uID;
                 }
             }
@@ -143,8 +155,8 @@ private:
         return;
     }
     
-    int GetMinDistID(unordered_map<int,Node> Q,unordered_map<int,int> dist){
-        int MinDistValue = INFINITY;
+    int GetMinDistID(unordered_map<int,Node>& Q,unordered_map<int,int>& dist){
+        int MinDistValue = 999999999;
         int ret = -1;
         for ( auto it = dist.begin(); it != dist.end(); ++it ){
             if(it->second < MinDistValue && Q.find(it->first) != Q.end()){
@@ -162,12 +174,12 @@ private:
     
     void BellmanFord(Graph g, int src, unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         if(dist.size() != 0 || prev.size() != 0){
-            cout<<"Error(BellmanFord):Invalid input"<<endl;
+            //cout<<"Error(BellmanFord):Invalid input"<<endl;
             return;
         }
         //Initialization
         for ( auto it = g.Nodes.begin(); it != g.Nodes.end(); ++it ){ //
-            dist[it->first] = INFINITY;
+            dist[it->first] = 999999999;
             prev[it->first] = UNDEFINED;
         }
         
@@ -215,43 +227,18 @@ private:
     }
     
     
-    void PrintDist(Graph g, int src, unordered_map<int,int> & dist){
+    void PrintDist(int src, unordered_map<int,int> & dist){
         cout<<"dist table for node "<<src<<endl;
         for(auto it = dist.begin(); it != dist.end(); it++){
             cout<<"dst "<<it->first<<" to src "<<src<<" cost "<<it->second<<endl;
         }
     }
     
-    void PrintForwardTable(Graph g, int src, unordered_map<int,int> & dist, unordered_map<int,int> & prev){
-        cout<<endl;
-        cout<<"Forward Table for Node "<<src<<":"<<endl;
-        vector<int> stack;
-        int dst = 0;
-        while(dst <= g.MaxNodeID){
-            if(!g.HasNode(dst)){
-                dst++;
-                continue;
-            }
-            stack.clear();
-            int tmp = dst;
-            stack.push_back(dst);
-            while(tmp != src){
-                stack.push_back(prev[tmp]);
-                tmp = prev[tmp];
-            }
-            cout<<"dst:"<<dst<<"  cost:"<<dist[dst]<<endl;
-            cout<<"    ";
-            for(int i = int(stack.size()-1); i>= 0; i--){
-                cout<<stack[i]<<"  ";
-            }
-            cout<<endl;
-            dst++;
-        }
-    }
     void OutTopology(Graph g, int src,unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         ofstream outfile;
         outfile.open("output.txt", ios_base::app);
         outfile<<endl;
+        cout<<endl;
         vector<int> stack;
         int dst = 0;
         while(dst <= g.MaxNodeID){
@@ -259,7 +246,7 @@ private:
                 dst++;
                 continue;
             }
-            if(dist[dst] == INFINITY){
+            if(dist[dst] == 999999999){
                 dst++;
                 continue;
             }
@@ -272,12 +259,16 @@ private:
             }
             if(stack.size()==1){
                 outfile<<dst<<" "<<stack[0]<<" "<<dist[dst]<<endl;
+                cout<<dst<<" "<<stack[0]<<" "<<dist[dst]<<endl;
             }else{
                 outfile<<dst<<" "<<stack[stack.size()-2]<<" "<<dist[dst]<<endl;
+                cout<<dst<<" "<<stack[stack.size()-2]<<" "<<dist[dst]<<endl;
             }
             dst++;
         }
         outfile<<endl;
+        cout<<endl;
+        outfile.close();
     }
     
     void ProcessMessage(string msgline, int &src, int &dst, string &msg){

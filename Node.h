@@ -31,8 +31,26 @@ public:
     }
     
     Node(int Id, vector<Edge> edges){
-        Edges = edges;
+        for(int i = 0; i < edges.size(); i++){
+            Edges.push_back(edges[i]);
+        }
         ID = Id;
+    }
+    
+    Node(const Node &n){
+        ID = n.ID;
+        for(int i = 0; i < n.Edges.size(); i++){
+            Edges.push_back(n.Edges[i]);
+        }
+    }
+    
+    Node operator= (const Node& n) const{
+        Node ret;
+        ret.ID = n.ID;
+        for(int i = 0; i < n.Edges.size();i++){
+            ret.Edges.push_back(n.Edges[i]);
+        }
+        return ret;
     }
     
     int AddEdge(Edge e){
@@ -41,12 +59,23 @@ public:
         Edges.push_back(e);
         return 1;
     }
-    
+
     int UpdateEdge(Edge e){
         for(int i = 0; i<Edges.size(); i++){
             if(Edges[i].left == e.left && Edges[i].right == e.right){
-                if(e.weight == -999){
-                    Edges.erase(Edges.begin()+i);
+                if(e.weight <0){
+                    vector<Edge> tmp_vec;
+                    for(int j = 0 ; j < Edges.size(); j++){
+                        if(j != i){
+                            tmp_vec.push_back(Edges[j]);
+                        }
+                    }
+                    Edges.clear();
+                    for(int j = 0; j < tmp_vec.size(); j++){
+                        Edges.push_back(tmp_vec[j]);
+                    }
+                    //Edges.erase(Edges.begin()+(i));
+                   
                     return 1;
                 }else{
                     Edges[i].weight = e.weight;
@@ -54,9 +83,16 @@ public:
                 }
             }
         }
-        cout<<"Warning(Node.UpdateEdge):Edge not found; TODO:Add edge"<<endl;
         AddEdge(e);
         return 1;
+    }
+
+    
+    void PrintNode(){
+        cout<<"Print Node "<<ID<<endl;
+        for(int i = 0; i < Edges.size(); i++){
+            cout<<"  "<<Edges[i].left <<"->"<<Edges[i].right<<":"<<Edges[i].weight<<endl;
+        }
     }
     
 };

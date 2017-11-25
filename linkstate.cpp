@@ -21,14 +21,12 @@ int main(int argc, char** argv) {
     Graph g(graphfile);
     Solver solver;
     int count=1;
-    cout<<"Round"<<count<<endl;
     solver.LinkState(g);
     solver.OutputMessage(outfile, messagefile);
     ifstream cfile(changesfile);
     int s,d,w;
     while(cfile>>s>>d>>w){
         count++;
-        cout<<"Round"<<count<<endl;
         g.UpdateGraph(Edge(s,d,w));
         solver.LinkState(g);
         solver.OutputMessage(outfile, messagefile);

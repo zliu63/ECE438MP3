@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <vector>
-#define INFINITY 999999999
+//#define INFINITY 999999999
 #define UNDEFINED -1
 
 class Edge {
@@ -45,6 +45,12 @@ public:
             right = s;
         }
         weight = 1;
+    }
+    
+    Edge(const Edge & e){
+        left = e.left;
+        right = e.right;
+        weight = e.weight;
     }
     
     Edge operator= (const Edge& e) const{
