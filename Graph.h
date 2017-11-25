@@ -32,7 +32,7 @@ public:
         ifstream infile(filename);
         int s, d, w;
         while (infile >> s >> d>> w)
-        {
+        {   
             Edge e(s,d,w);
             if(s == d && HasNode(s)){
                 continue;

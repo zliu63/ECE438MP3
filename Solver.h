@@ -29,9 +29,7 @@ public:
             int src = it->first;
             unordered_map<int,int> dist,prev;
             Dijkstra(g,src,dist,prev);
-            //OutTopology(g,src,dist,prev);
-            //PrintForwardTable(g, src, dist, prev);
-            PrintDist(g, src, dist);
+            OutTopology(g, src, dist, prev);
             CostTable.insert(make_pair(src, dist));
             ForwardTable.insert(make_pair(src,prev));
         }
@@ -44,10 +42,36 @@ public:
             int src = it->first;
             unordered_map<int,int> dist,prev;
             BellmanFord(g, src, dist, prev);
-            //PrintForwardTable(g, src, dist, prev);
-            PrintDist(g, src, dist);
+            OutTopology(g, src, dist, prev);
             CostTable.insert(make_pair(src, dist));
             ForwardTable.insert(make_pair(src,prev));
+        }
+    }
+    
+    void OutputMessage(string outfilename,string messagefile){
+        ofstream outfile;
+        outfile.open(outfilename, ios_base::app);
+        ifstream mfile(messagefile);
+        string line;
+        while(getline(mfile,line)){
+            //TODO:
+            int src,dst;
+            string msg = "";
+            ProcessMessage(line, src, dst, msg);
+            outfile<<"From "<<src<<" to "<<dst<<" cost "<<CostTable[src][dst]<<" hops ";
+            vector<int> stack;
+            int tmp = dst;
+            stack.push_back(dst);
+            while(tmp != src){
+                if(tmp == UNDEFINED)
+                    return;
+                stack.push_back(ForwardTable[src][tmp]);
+                tmp = ForwardTable[src][tmp];
+            }
+            for(int i = int(stack.size()-1); i>= 0; i--){
+                outfile<<stack[i]<<" ";
+            }
+            outfile<<"message "<<msg<<endl;
         }
     }
     
@@ -58,6 +82,8 @@ public:
         int tmp = dst;
         stack.push_back(dst);
         while(tmp != src){
+            if(tmp == UNDEFINED)
+                return;
             stack.push_back(ForwardTable[src][tmp]);
             tmp = ForwardTable[src][tmp];
         }
@@ -147,19 +173,38 @@ private:
                 if(dist[u] + w < dist[v]){
                     dist[v] = dist[u] + w;
                     prev[v] = u;
-                }else if (dist[u]+w == dist[v] && u < prev[v]){ //tie break 2,3?
-                    prev[v] = u;
+                }else if (dist[u]+w == dist[v]){ //tie break1
+                    int t1_u = TieBreak1(src, u, prev);
+                    int t1_v = TieBreak1(src, v, prev);
+                    if(t1_u != UNDEFINED && t1_v != UNDEFINED && t1_u < t1_v)
+                        prev[v] = u;
                 }
                 if(dist[v] + w < dist[u]){
                     dist[u] = dist[v] + w;
                     prev[u] = v;
                 }else if (dist[v] + w == dist[u] && v < prev[u]){
-                    prev[u] = v;
+                    int t1_u = TieBreak1(src, u, prev);
+                    int t1_v = TieBreak1(src, v, prev);
+                    if(t1_u != UNDEFINED && t1_v != UNDEFINED && t1_v < t1_u)
+                        prev[u] = v;
                 }
             }
         }
         return;
     }
+    
+    int TieBreak1(int src, int dst, unordered_map<int,int> & prev){
+        int ret = UNDEFINED;
+        int tmp = dst;
+        while(tmp != src){
+            if(tmp == UNDEFINED)
+                return UNDEFINED;
+            ret = tmp;
+            tmp = prev[tmp];
+        }
+        return ret;
+    }
+    
     
     void PrintDist(Graph g, int src, unordered_map<int,int> & dist){
         cout<<"dist table for node "<<src<<endl;
@@ -196,12 +241,16 @@ private:
     }
     void OutTopology(Graph g, int src,unordered_map<int,int> & dist, unordered_map<int,int> & prev){
         ofstream outfile;
-        outfile.open("/Users/ziyangliu/Documents/ECE438MP3/ECE438MP3/ECE438MP3/output.txt", ios_base::app);
+        outfile.open("output.txt", ios_base::app);
         outfile<<endl;
         vector<int> stack;
         int dst = 0;
         while(dst <= g.MaxNodeID){
             if(!g.HasNode(dst)){
+                dst++;
+                continue;
+            }
+            if(dist[dst] == INFINITY){
                 dst++;
                 continue;
             }
@@ -220,6 +269,17 @@ private:
             dst++;
         }
         outfile<<endl;
+    }
+    
+    void ProcessMessage(string msgline, int &src, int &dst, string &msg){
+        size_t pos0, pos1, pos2;
+        pos0 = msgline.find_first_of(" ");
+        pos1 = msgline.find_first_of(" ", pos0+1);
+        pos2 = msgline.length();
+        src = stoi(msgline.substr(0,pos0 - 0));
+        dst = stoi(msgline.substr(pos0+1,pos1 - pos0 - 1));
+        msg = msgline.substr(pos1+1,pos2 - pos1 - 1);
+        
     }
 };
 
